@@ -5,3 +5,4 @@ export * from './core/binning';
 export * from './core/pointIndex';
 export * from './core/binSelection';
 export * from './adapters/echarts/scatterOption';
+export * from './adapters/echarts/histogramOption';
