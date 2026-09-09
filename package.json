@@ -1,0 +1,48 @@
+{
+  "name": "rubin-charts",
+  "version": "0.1.0",
+  "description": "Engine-independent chart core (selection, binning, hit-testing) and Apache ECharts adapters for Rubin Observatory data visualization.",
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "main": "./dist/rubin-charts.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/rubin-charts.js"
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint src && prettier --check .",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ugyballoons/rubin-charts.git"
+  },
+  "dependencies": {
+    "kdbush": "^4.1.0"
+  },
+  "devDependencies": {
+    "echarts": "^6.1.0",
+    "oxlint": "^1.82.0",
+    "prettier": "^3.9.6",
+    "typescript": "~6.0",
+    "vite": "^7.3.6",
+    "vite-plugin-dts": "^5.1.0",
+    "vitest": "^3.2.7"
+  },
+  "peerDependencies": {
+    "echarts": "^6.0.0"
+  }
+}
