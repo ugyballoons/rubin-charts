@@ -7,3 +7,4 @@ export * from './core/binSelection';
 export * from './adapters/echarts/scatterOption';
 export * from './adapters/echarts/histogramOption';
 export * from './adapters/echarts/polarOption';
+export * from './adapters/echarts/boxOption';
