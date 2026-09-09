@@ -1,4 +1,4 @@
-import { buildScatterOption, msToMjd, superscript } from './scatterOption';
+import { buildScatterOption, msToMjd, selectionOverlaySeries, superscript } from './scatterOption';
 import type { AxisSpec, SeriesSpec } from '../../adapter';
 import { dataIdKey } from '../../core/dataId';
 
@@ -75,6 +75,15 @@ describe('buildScatterOption', () => {
       largeThreshold: 2,
     }) as any;
     expect(opt.series[0].large).toBe(true);
+  });
+
+  it('exposes the overlay alone for merge updates', () => {
+    const overlay = selectionOverlaySeries([series], new Set([ids[0], ids[2]])) as any;
+    expect(overlay.id).toBe('__selected__');
+    expect(overlay.data).toEqual([
+      [1, 4],
+      [3, 6],
+    ]);
   });
 
   it('formats MJD and base-e labels', () => {

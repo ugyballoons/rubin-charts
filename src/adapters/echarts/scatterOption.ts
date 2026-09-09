@@ -90,19 +90,7 @@ export function buildScatterOption(input: ScatterOptionInput): EChartsCoreOption
     });
   });
 
-  const overlay = input.series.flatMap((s) =>
-    pickSelected(s, input.selected).map(([x, y]) => [x, y]),
-  );
-  series.push({
-    id: '__selected__',
-    name: 'selected',
-    type: 'scatter',
-    data: overlay,
-    symbolSize: 7,
-    itemStyle: { color: 'transparent', borderColor: '#000', borderWidth: 2 },
-    silent: true,
-    z: 10,
-  });
+  series.push(selectionOverlaySeries(input.series, input.selected));
 
   return {
     animation: false,
@@ -146,6 +134,32 @@ function maskSeries(s: SeriesSpec, keep: ReadonlySet<DataIdKey>): SeriesSpec {
         })()
       : idx.map((j) => (s.x as readonly string[])[j]);
   return { ...s, x, y, dataIds: idx.map((j) => s.dataIds[j]) };
+}
+
+export const SELECTION_SERIES_ID = '__selected__';
+
+/**
+ * The overlay series that marks selected points. Send it alone through
+ * `setOption({ series: [overlay] })` (merge mode) on every selection change so
+ * the base datasets are never re-uploaded.
+ */
+export function selectionOverlaySeries(
+  series: readonly SeriesSpec[],
+  selected: ReadonlySet<DataIdKey>,
+  largeThreshold = 5000,
+): Record<string, unknown> {
+  const data = series.flatMap((s) => pickSelected(s, selected));
+  return {
+    id: SELECTION_SERIES_ID,
+    name: 'selected',
+    type: 'scatter',
+    data,
+    symbolSize: 7,
+    itemStyle: { color: 'transparent', borderColor: '#000', borderWidth: 2 },
+    large: data.length > largeThreshold,
+    silent: true,
+    z: 10,
+  };
 }
 
 function pickSelected(
