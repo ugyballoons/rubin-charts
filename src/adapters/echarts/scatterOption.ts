@@ -164,6 +164,8 @@ export function selectionOverlaySeries(
       : { color: 'transparent', borderColor: '#111', borderWidth: 2 },
     large,
     silent: true,
+    // Own canvas layer: repainting the overlay must not repaint the 100k-point base.
+    zlevel: 1,
     z: 10,
   };
 }
