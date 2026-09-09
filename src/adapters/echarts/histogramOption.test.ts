@@ -49,7 +49,6 @@ describe('histogram option', () => {
     const api = (bin: number) => ({
       value: (i: number) => [1, 3, 10, bin][i],
       coord: (v: number[]) => [v[0] * 10, 100 - v[1] * 10],
-      style: (o: object) => o,
     });
     const none = buildHistogramOption({
       series,

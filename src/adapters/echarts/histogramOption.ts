@@ -81,7 +81,7 @@ export function buildHistogramOption(
       clip: true,
       renderItem: (
         _params: unknown,
-        api: { value(i: number): number; coord(v: number[]): number[]; style(o: object): object },
+        api: { value(i: number): number; coord(v: number[]): number[] },
       ) => {
         const bin = api.value(3);
         const lo = api.value(vertical ? 0 : 1);
@@ -97,12 +97,12 @@ export function buildHistogramOption(
         return {
           type: 'rect',
           shape: { x: x + 0.5, y, width: Math.max(w - 1, 0.5), height: h },
-          style: api.style({
+          style: {
             fill: s.color,
             opacity: dim ? 0.35 : 1,
             stroke: '#fff',
             lineWidth: 0.5,
-          }),
+          },
         };
       },
     };
@@ -118,8 +118,8 @@ export function buildHistogramOption(
     nameGap: 30,
     nameTextStyle: { fontWeight: 'bold' },
     inverse: input.mainAxis.inverted,
-    min: bins.edges[0],
-    max: bins.edges[bins.edges.length - 1],
+    // Let the axis grow to nice ticks around the data, as the Flutter axes did.
+    scale: true,
   };
   const countOption = {
     type: 'value',
