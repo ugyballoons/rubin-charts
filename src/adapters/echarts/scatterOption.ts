@@ -11,7 +11,8 @@ function axisOption(axis: AxisSpec) {
     inverse: axis.inverted,
     scale: true,
     nameLocation: 'middle',
-    nameGap: 28,
+    nameGap: 30,
+    nameTextStyle: { fontWeight: 'bold' },
   };
   if (axis.kind === 'category') return { ...base, type: 'category' };
   if (axis.kind === 'datetime') {
@@ -97,7 +98,7 @@ export function buildScatterOption(input: ScatterOptionInput): EChartsCoreOption
     dataset: datasets,
     xAxis: axisOption(input.xAxis),
     yAxis: axisOption(input.yAxis),
-    grid: { containLabel: true, left: 12, right: 16, top: 16, bottom: 12 },
+    grid: { containLabel: true, left: 48, right: 16, top: 16, bottom: 36 },
     dataZoom: [
       {
         type: 'inside',
@@ -149,14 +150,19 @@ export function selectionOverlaySeries(
   largeThreshold = 5000,
 ): Record<string, unknown> {
   const data = series.flatMap((s) => pickSelected(s, selected));
+  const large = data.length > largeThreshold;
   return {
     id: SELECTION_SERIES_ID,
     name: 'selected',
     type: 'scatter',
     data,
-    symbolSize: 7,
-    itemStyle: { color: 'transparent', borderColor: '#000', borderWidth: 2 },
-    large: data.length > largeThreshold,
+    // A few points get a ring; a large brush gets a solid, smaller mark so the
+    // overlay stays legible and cheap to draw.
+    symbolSize: large ? 4 : 8,
+    itemStyle: large
+      ? { color: '#111', opacity: 0.85 }
+      : { color: 'transparent', borderColor: '#111', borderWidth: 2 },
+    large,
     silent: true,
     z: 10,
   };
