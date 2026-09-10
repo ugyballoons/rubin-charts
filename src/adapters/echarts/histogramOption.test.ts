@@ -74,6 +74,35 @@ describe('histogram option: datetime and category axes', () => {
   });
 });
 
+describe('histogram option: linked selection inner bars', () => {
+  it('draws an inner bar of the selected count when selectedCounts is given', () => {
+    const api = (bin: number) => ({
+      value: (i: number) => [1, 3, 10, bin, 2][i],
+      coord: (v: number[]) => [v[0] * 10, 100 - v[1] * 10],
+    });
+    const opt = buildHistogramOption({
+      series,
+      mainAxis: logAxis,
+      nBins: 3,
+      selected: new Map(),
+      selectedCounts: new Map([['h', [2, 0, 0]]]),
+    }) as any;
+    const item = opt.series[0].renderItem({}, api(0));
+    expect(item.type).toBe('group');
+    expect(item.children).toHaveLength(2);
+    expect(item.children[0].style.opacity).toBe(0.35);
+    expect(item.children[1].shape.height).toBe(20);
+    const none = buildHistogramOption({
+      series,
+      mainAxis: logAxis,
+      nBins: 3,
+      selected: new Map(),
+      selectedCounts: new Map([['h', [0, 0, 0]]]),
+    }) as any;
+    expect(none.series[0].renderItem({}, api(0)).type).toBe('rect');
+  });
+});
+
 describe('histogram option', () => {
   it('bins uniformly in pixel space on a log axis', () => {
     const bins = computeHistogramBins({ series, mainAxis: logAxis, nBins: 3, selected: new Map() });
@@ -126,7 +155,7 @@ describe('histogram option', () => {
       nBins: 3,
       selected: new Map([['h', new Set([1])]]),
     }) as any;
-    expect(some.series[0].renderItem({}, api(0)).style.opacity).toBe(0.35);
+    expect(some.series[0].renderItem({}, api(0)).style.opacity).toBe(0.2);
     expect(some.series[0].renderItem({}, api(1)).style.opacity).toBe(1);
   });
 });

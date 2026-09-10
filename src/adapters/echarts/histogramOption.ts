@@ -20,6 +20,12 @@ export interface HistogramOptionInput {
   readonly bounds?: Bounds;
   /** Selected bin indices per series id. */
   readonly selected: ReadonlyMap<string, ReadonlySet<number>>;
+  /**
+   * Per series id: how many currently selected rows fall in each bin (from a
+   * selection made in any chart). When present, bars are drawn as a light
+   * tint with an inner bar of that height in the full series colour.
+   */
+  readonly selectedCounts?: ReadonlyMap<string, ArrayLike<number>>;
 }
 
 export interface HistogramBins {
@@ -75,10 +81,13 @@ export function buildHistogramOption(
     const counts = bins.perSeries.get(s.id)!.counts;
     const selected = input.selected.get(s.id);
     const anySelected = (selected?.size ?? 0) > 0;
+    const inner = input.selectedCounts?.get(s.id);
+    const linked = !!inner && Array.from(inner as ArrayLike<number>).some((v) => v > 0);
     const data = Array.from(counts, (c, i) => {
       const lo = bins.edges[i];
       const hi = bins.edges[i + 1];
-      return vertical ? [lo, c, hi, i] : [c, lo, hi, i];
+      const sel = inner ? inner[i] : 0;
+      return vertical ? [lo, c, hi, i, sel] : [c, lo, hi, i, sel];
     });
     return {
       id: s.id,
@@ -103,15 +112,35 @@ export function buildHistogramOption(
         const w = Math.abs(p1[0] - p0[0]);
         const h = Math.abs(p1[1] - p0[1]);
         const dim = anySelected && !selected!.has(bin);
-        return {
+        const outer = {
           type: 'rect',
           shape: { x: x + 0.5, y, width: Math.max(w - 1, 0.5), height: h },
           style: {
             fill: s.color,
-            opacity: dim ? 0.35 : 1,
+            opacity: dim ? 0.2 : linked ? 0.35 : 1,
             stroke: '#fff',
             lineWidth: 0.5,
           },
+        };
+        if (!linked) return outer;
+        // Inner bar: the selected rows in this bin, in the full series colour.
+        const sel = api.value(4);
+        const q0 = vertical ? api.coord([lo, 0]) : api.coord([0, lo]);
+        const q1 = vertical ? api.coord([hi, sel]) : api.coord([sel, hi]);
+        const ix = Math.min(q0[0], q1[0]);
+        const iy = Math.min(q0[1], q1[1]);
+        const iw = Math.abs(q1[0] - q0[0]);
+        const ih = Math.abs(q1[1] - q0[1]);
+        return {
+          type: 'group',
+          children: [
+            outer,
+            {
+              type: 'rect',
+              shape: { x: ix + 0.5, y: iy, width: Math.max(iw - 1, 0.5), height: ih },
+              style: { fill: s.color, opacity: dim ? 0.5 : 1 },
+            },
+          ],
         };
       },
     };
