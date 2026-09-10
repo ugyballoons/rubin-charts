@@ -24,7 +24,8 @@
     "lint": "oxlint src && prettier --check .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepare": "npm run build"
   },
   "repository": {
     "type": "git",

@@ -15,6 +15,19 @@ by [`rubintv-ddv`](https://github.com/ugyballoons/rubintv-ddv).
 - `src/adapter.ts` — the `ChartAdapterProps` contract every chart window renders through.
 - `src/adapters/echarts` — pure functions that turn adapter props into ECharts options.
 
+## Consuming it
+
+There is no npm release yet. `rubintv-ddv` depends on this repository directly,
+pinned to a commit:
+
+```
+"rubin-charts": "github:ugyballoons/rubin-charts#<commit>"
+```
+
+npm builds it on install through the `prepare` script. For local iteration on
+both repositories together, use `npm link` from this directory and
+`npm link rubin-charts` in the app.
+
 ## Develop
 
 ```
