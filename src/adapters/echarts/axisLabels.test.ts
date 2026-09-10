@@ -48,3 +48,14 @@ describe('tick labels', () => {
     expect(typeof h.xAxis.axisLabel.formatter).toBe('function');
   });
 });
+
+describe('verticalNameGap', () => {
+  it('grows with the widest extreme label and never shrinks below the minimum', async () => {
+    const { verticalNameGap, formatTick } = await import('./axisLabels');
+    expect(formatTick(100000)).toBe('100,000');
+    expect(formatTick(2026071300013)).toBe('2.03e+12');
+    expect(verticalNameGap([0, 1])).toBe(30);
+    expect(verticalNameGap([0, 100000])).toBeGreaterThan(verticalNameGap([0, 10]));
+    expect(verticalNameGap(new Float64Array([-100, 40]))).toBeGreaterThanOrEqual(30);
+  });
+});

@@ -1,18 +1,19 @@
 import type { EChartsCoreOption } from 'echarts/core';
 import type { AxisSpec, SeriesSpec } from '../../adapter';
 import type { DataIdKey } from '../../core/dataId';
-import { tickLabelStyle } from './axisLabels';
+import { tickLabelStyle, verticalNameGap } from './axisLabels';
 
 const MJD_EPOCH_MS = Date.UTC(1858, 10, 17);
 export const msToMjd = (ms: number): number => (ms - MJD_EPOCH_MS) / 86_400_000;
 
-function axisOption(axis: AxisSpec) {
+function axisOption(axis: AxisSpec, values?: ArrayLike<number>) {
+  const vertical = axis.location === 'left' || axis.location === 'right';
   const base: Record<string, unknown> = {
     name: axis.label,
     inverse: axis.inverted,
     scale: true,
     nameLocation: 'middle',
-    nameGap: 30,
+    nameGap: vertical ? verticalNameGap(values) : 30,
     nameTextStyle: { fontWeight: 'bold' },
   };
   if (axis.kind === 'category') {
@@ -115,8 +116,8 @@ export function buildScatterOption(input: ScatterOptionInput): EChartsCoreOption
     animation: false,
     dataset: datasets,
     xAxis: axisOption(input.xAxis),
-    yAxis: axisOption(input.yAxis),
-    grid: { containLabel: true, left: 48, right: 16, top: 16, bottom: 36 },
+    yAxis: axisOption(input.yAxis, input.series[0]?.y),
+    grid: { containLabel: true, left: 16, right: 16, top: 16, bottom: 36 },
     dataZoom: [
       {
         type: 'inside',

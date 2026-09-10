@@ -3,7 +3,7 @@ import type { AxisSpec } from '../../adapter';
 import { binValues, pixelSpaceBinEdges, type BinCounts, type Bounds } from '../../core/binning';
 import { mappingFor } from '../../core/mapping';
 import { msToMjd } from './scatterOption';
-import { tickLabelStyle } from './axisLabels';
+import { tickLabelStyle, verticalNameGap } from './axisLabels';
 
 export interface HistogramSeriesInput {
   readonly id: string;
@@ -184,12 +184,16 @@ export function buildHistogramOption(
     // Let the axis grow to nice ticks around the data, as the Flutter axes did.
     scale: true,
   };
+  const maxCount = Math.max(
+    0,
+    ...[...bins.perSeries.values()].map((b) => Math.max(0, ...Array.from(b.counts))),
+  );
   const countOption = {
     type: 'value',
     axisLabel: tickLabelStyle('number'),
     name: 'count',
     nameLocation: 'middle',
-    nameGap: 40,
+    nameGap: vertical ? verticalNameGap([0, maxCount]) : 30,
     nameTextStyle: { fontWeight: 'bold' },
     min: 0,
     // The Flutter histogram inverts the count axis for horizontal bars.
@@ -200,7 +204,7 @@ export function buildHistogramOption(
     animation: false,
     xAxis: vertical ? mainOption : countOption,
     yAxis: vertical ? countOption : mainOption,
-    grid: { containLabel: true, left: 48, right: 16, top: 16, bottom: 36 },
+    grid: { containLabel: true, left: 16, right: 16, top: 16, bottom: 36 },
     series,
   };
 }
