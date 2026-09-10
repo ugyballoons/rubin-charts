@@ -31,12 +31,23 @@ export function measureLabel(text: string): number {
   return ctx ? ctx.measureText(text).width : text.length * 7;
 }
 
-/** How ECharts formats a value-axis tick, near enough to size things. */
+/**
+ * Roughly what ECharts draws for a "nice" tick near this value: a few
+ * significant digits, thousands separators, exponent form for huge values.
+ */
 export function formatTick(v: number): string {
   if (!Number.isFinite(v)) return '';
   if (Math.abs(v) >= 1e9 || (Math.abs(v) < 1e-4 && v !== 0)) return v.toExponential(2);
-  return Number(v.toPrecision(6)).toLocaleString('en-US');
+  return Number(v.toPrecision(3)).toLocaleString('en-US');
 }
+
+/**
+ * Left grid margin that keeps a vertical axis title inside the chart: the
+ * title sits `nameGap` left of the axis line while `containLabel` reserves
+ * only the tick labels, so the margin must cover the title's own height plus
+ * the amount the gap may exceed the drawn labels.
+ */
+export const GRID_LEFT = 30;
 
 /**
  * Gap between a vertical axis and its title, wide enough for the widest tick

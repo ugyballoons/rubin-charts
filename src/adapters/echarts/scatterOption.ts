@@ -1,7 +1,7 @@
 import type { EChartsCoreOption } from 'echarts/core';
 import type { AxisSpec, SeriesSpec } from '../../adapter';
 import type { DataIdKey } from '../../core/dataId';
-import { tickLabelStyle, verticalNameGap } from './axisLabels';
+import { GRID_LEFT, tickLabelStyle, verticalNameGap } from './axisLabels';
 
 const MJD_EPOCH_MS = Date.UTC(1858, 10, 17);
 export const msToMjd = (ms: number): number => (ms - MJD_EPOCH_MS) / 86_400_000;
@@ -117,7 +117,7 @@ export function buildScatterOption(input: ScatterOptionInput): EChartsCoreOption
     dataset: datasets,
     xAxis: axisOption(input.xAxis),
     yAxis: axisOption(input.yAxis, input.series[0]?.y),
-    grid: { containLabel: true, left: 16, right: 16, top: 16, bottom: 36 },
+    grid: { containLabel: true, left: GRID_LEFT, right: 16, top: 16, bottom: 36 },
     dataZoom: [
       {
         type: 'inside',

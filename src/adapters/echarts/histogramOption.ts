@@ -3,7 +3,7 @@ import type { AxisSpec } from '../../adapter';
 import { binValues, pixelSpaceBinEdges, type BinCounts, type Bounds } from '../../core/binning';
 import { mappingFor } from '../../core/mapping';
 import { msToMjd } from './scatterOption';
-import { tickLabelStyle, verticalNameGap } from './axisLabels';
+import { GRID_LEFT, tickLabelStyle, verticalNameGap } from './axisLabels';
 
 export interface HistogramSeriesInput {
   readonly id: string;
@@ -204,7 +204,7 @@ export function buildHistogramOption(
     animation: false,
     xAxis: vertical ? mainOption : countOption,
     yAxis: vertical ? countOption : mainOption,
-    grid: { containLabel: true, left: 16, right: 16, top: 16, bottom: 36 },
+    grid: { containLabel: true, left: GRID_LEFT, right: 16, top: 16, bottom: 36 },
     series,
   };
 }

@@ -2,7 +2,7 @@ import type { EChartsCoreOption } from 'echarts/core';
 import type { AxisSpec } from '../../adapter';
 import { binValues, pixelSpaceBinEdges, type Bounds } from '../../core/binning';
 import { mappingFor } from '../../core/mapping';
-import { tickLabelStyle, verticalNameGap } from './axisLabels';
+import { GRID_LEFT, tickLabelStyle, verticalNameGap } from './axisLabels';
 
 export interface BoxSeriesInput {
   readonly id: string;
@@ -208,7 +208,7 @@ export function buildBoxOption(
     animation: false,
     xAxis: vertical ? main : cross,
     yAxis: vertical ? cross : main,
-    grid: { containLabel: true, left: 16, right: 16, top: 16, bottom: 36 },
+    grid: { containLabel: true, left: GRID_LEFT, right: 16, top: 16, bottom: 36 },
     series,
   };
 }
