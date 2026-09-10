@@ -33,6 +33,8 @@ export interface AxisSpec {
   readonly kind: 'number' | 'category' | 'datetime';
   /** For datetime axes: label ticks as Modified Julian Date instead of calendar dates. */
   readonly mjdLabels?: boolean;
+  /** For category axes: the labels; series values are indices into this list. */
+  readonly categories?: readonly string[];
   /** When set the axis ignores zoom and pan. */
   readonly fixedBounds?: AxisBounds;
 }

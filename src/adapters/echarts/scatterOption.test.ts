@@ -86,6 +86,17 @@ describe('buildScatterOption', () => {
     ]);
   });
 
+  it('labels category axes from the spec', () => {
+    const opt = buildScatterOption({
+      series: [series],
+      xAxis: { ...xAxis, kind: 'category', categories: ['a', 'b', 'c'] },
+      yAxis,
+      selected: new Set(),
+      drillDown: null,
+    }) as any;
+    expect(opt.xAxis).toMatchObject({ type: 'category', data: ['a', 'b', 'c'] });
+  });
+
   it('formats MJD and base-e labels', () => {
     expect(msToMjd(Date.UTC(2000, 0, 1, 12))).toBeCloseTo(51544.5, 6);
     expect(superscript(-12)).toBe('⁻¹²');

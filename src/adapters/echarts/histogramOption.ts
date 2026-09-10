@@ -2,6 +2,7 @@ import type { EChartsCoreOption } from 'echarts/core';
 import type { AxisSpec } from '../../adapter';
 import { binValues, pixelSpaceBinEdges, type BinCounts, type Bounds } from '../../core/binning';
 import { mappingFor } from '../../core/mapping';
+import { msToMjd } from './scatterOption';
 
 export interface HistogramSeriesInput {
   readonly id: string;
@@ -28,6 +29,13 @@ export interface HistogramBins {
 
 /** Compute the shared, pixel-uniform bin edges and per-series counts. */
 export function computeHistogramBins(input: HistogramOptionInput): HistogramBins {
+  if (input.mainAxis.kind === 'category' && input.mainAxis.categories) {
+    // One bin per category; values are category indices.
+    const n = input.mainAxis.categories.length;
+    const edges = Array.from({ length: n + 1 }, (_, i) => i - 0.5);
+    const perSeries = new Map(input.series.map((s) => [s.id, binValues(s.values, edges)]));
+    return { edges, perSeries };
+  }
   const mapping = mappingFor(input.mainAxis.mapping);
   let bounds = input.bounds;
   if (!bounds) {
@@ -89,6 +97,7 @@ export function buildHistogramOption(
         const c = api.value(countIndex);
         const p0 = vertical ? api.coord([lo, 0]) : api.coord([0, lo]);
         const p1 = vertical ? api.coord([hi, c]) : api.coord([c, hi]);
+        // On a category axis coords are per index, so half-unit edges map correctly.
         const x = Math.min(p0[0], p1[0]);
         const y = Math.min(p0[1], p1[1]);
         const w = Math.abs(p1[0] - p0[0]);
@@ -108,11 +117,27 @@ export function buildHistogramOption(
     };
   });
 
+  const kind = input.mainAxis.kind;
   const mainOption = {
-    type: input.mainAxis.mapping === 'linear' ? 'value' : 'log',
-    ...(input.mainAxis.mapping !== 'linear' && {
-      logBase: input.mainAxis.mapping === 'log10' ? 10 : Math.E,
+    type:
+      kind === 'datetime'
+        ? 'time'
+        : kind === 'category'
+          ? 'category'
+          : input.mainAxis.mapping === 'linear'
+            ? 'value'
+            : 'log',
+    ...(kind === 'category' && {
+      data: input.mainAxis.categories ? [...input.mainAxis.categories] : undefined,
     }),
+    ...(kind === 'datetime' &&
+      input.mainAxis.mjdLabels && {
+        axisLabel: { formatter: (v: number) => msToMjd(v).toFixed(3) },
+      }),
+    ...(kind === 'number' &&
+      input.mainAxis.mapping !== 'linear' && {
+        logBase: input.mainAxis.mapping === 'log10' ? 10 : Math.E,
+      }),
     name: input.mainAxis.label,
     nameLocation: 'middle',
     nameGap: 30,

@@ -14,7 +14,13 @@ function axisOption(axis: AxisSpec) {
     nameGap: 30,
     nameTextStyle: { fontWeight: 'bold' },
   };
-  if (axis.kind === 'category') return { ...base, type: 'category' };
+  if (axis.kind === 'category')
+    return {
+      ...base,
+      type: 'category',
+      data: axis.categories ? [...axis.categories] : undefined,
+      scale: undefined,
+    };
   if (axis.kind === 'datetime') {
     return axis.mjdLabels
       ? { ...base, type: 'time', axisLabel: { formatter: (v: number) => msToMjd(v).toFixed(3) } }

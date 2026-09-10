@@ -11,6 +11,69 @@ const logAxis: AxisSpec = {
   kind: 'number',
 };
 
+describe('histogram option: datetime and category axes', () => {
+  it('uses a time axis with optional MJD labels for datetime data', () => {
+    const t0 = Date.UTC(2025, 10, 1);
+    const opt = buildHistogramOption({
+      series: [
+        {
+          id: 't',
+          name: 't',
+          values: new Float64Array([t0, t0 + 3.6e6, t0 + 7.2e6]),
+          color: '#000',
+        },
+      ],
+      mainAxis: {
+        location: 'bottom',
+        label: 'obs_start',
+        mapping: 'linear',
+        inverted: false,
+        kind: 'datetime',
+        mjdLabels: true,
+      },
+      nBins: 2,
+      selected: new Map(),
+    }) as any;
+    expect(opt.xAxis.type).toBe('time');
+    expect(opt.xAxis.axisLabel.formatter(Date.UTC(2000, 0, 1, 12))).toBe('51544.500');
+  });
+
+  it('bins one bar per category for categorical data', () => {
+    const bins = computeHistogramBins({
+      series: [{ id: 'c', name: 'c', values: new Float64Array([0, 1, 1, 2, 2, 2]), color: '#000' }],
+      mainAxis: {
+        location: 'bottom',
+        label: 'band',
+        mapping: 'linear',
+        inverted: false,
+        kind: 'category',
+        categories: ['g', 'r', 'i'],
+      },
+      nBins: 99,
+      selected: new Map(),
+    });
+    expect(bins.edges).toEqual([-0.5, 0.5, 1.5, 2.5]);
+    expect(Array.from(bins.perSeries.get('c')!.counts)).toEqual([1, 2, 3]);
+    const opt = buildHistogramOption(
+      {
+        series: [{ id: 'c', name: 'c', values: new Float64Array([0, 1]), color: '#000' }],
+        mainAxis: {
+          location: 'bottom',
+          label: 'band',
+          mapping: 'linear',
+          inverted: false,
+          kind: 'category',
+          categories: ['g', 'r', 'i'],
+        },
+        nBins: 3,
+        selected: new Map(),
+      },
+      bins,
+    ) as any;
+    expect(opt.xAxis).toMatchObject({ type: 'category', data: ['g', 'r', 'i'] });
+  });
+});
+
 describe('histogram option', () => {
   it('bins uniformly in pixel space on a log axis', () => {
     const bins = computeHistogramBins({ series, mainAxis: logAxis, nBins: 3, selected: new Map() });
