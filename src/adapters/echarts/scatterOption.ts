@@ -1,6 +1,7 @@
 import type { EChartsCoreOption } from 'echarts/core';
 import type { AxisSpec, SeriesSpec } from '../../adapter';
 import type { DataIdKey } from '../../core/dataId';
+import { tickLabelStyle } from './axisLabels';
 
 const MJD_EPOCH_MS = Date.UTC(1858, 10, 17);
 export const msToMjd = (ms: number): number => (ms - MJD_EPOCH_MS) / 86_400_000;
@@ -14,27 +15,38 @@ function axisOption(axis: AxisSpec) {
     nameGap: 30,
     nameTextStyle: { fontWeight: 'bold' },
   };
-  if (axis.kind === 'category')
+  if (axis.kind === 'category') {
     return {
       ...base,
       type: 'category',
       data: axis.categories ? [...axis.categories] : undefined,
       scale: undefined,
+      axisLabel: tickLabelStyle('category'),
     };
-  if (axis.kind === 'datetime') {
-    return axis.mjdLabels
-      ? { ...base, type: 'time', axisLabel: { formatter: (v: number) => msToMjd(v).toFixed(3) } }
-      : { ...base, type: 'time' };
   }
-  if (axis.mapping === 'linear') return { ...base, type: 'value' };
+  if (axis.kind === 'datetime') {
+    return {
+      ...base,
+      type: 'time',
+      axisLabel: tickLabelStyle(
+        'datetime',
+        axis.mjdLabels ? { formatter: (v: number) => msToMjd(v).toFixed(3) } : {},
+      ),
+    };
+  }
+  if (axis.mapping === 'linear')
+    return { ...base, type: 'value', axisLabel: tickLabelStyle('number') };
   const logBase = axis.mapping === 'log10' ? 10 : Math.E;
   return {
     ...base,
     type: 'log',
     logBase,
-    ...(axis.mapping === 'logE' && {
-      axisLabel: { formatter: (v: number) => `e${superscript(Math.round(Math.log(v)))}` },
-    }),
+    axisLabel: tickLabelStyle(
+      'log',
+      axis.mapping === 'logE'
+        ? { formatter: (v: number) => `e${superscript(Math.round(Math.log(v)))}` }
+        : {},
+    ),
   };
 }
 

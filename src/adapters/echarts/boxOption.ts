@@ -2,6 +2,7 @@ import type { EChartsCoreOption } from 'echarts/core';
 import type { AxisSpec } from '../../adapter';
 import { binValues, pixelSpaceBinEdges, type Bounds } from '../../core/binning';
 import { mappingFor } from '../../core/mapping';
+import { tickLabelStyle } from './axisLabels';
 
 export interface BoxSeriesInput {
   readonly id: string;
@@ -196,6 +197,7 @@ export function buildBoxOption(
     nameTextStyle: { fontWeight: 'bold' },
     inverse: a.inverted,
     scale: true,
+    axisLabel: tickLabelStyle(a.mapping === 'linear' ? 'number' : 'log'),
     ...extra,
   });
   const main = axis(input.mainAxis, {});

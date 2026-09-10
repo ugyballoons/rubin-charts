@@ -1,0 +1,50 @@
+import { buildScatterOption } from './scatterOption';
+import { buildHistogramOption } from './histogramOption';
+import { tickLabelStyle, TICK_LABEL_MAX_PX } from './axisLabels';
+import type { AxisSpec, SeriesSpec } from '../../adapter';
+import { dataIdKey } from '../../core/dataId';
+
+const ids = [1, 2].map((s) => dataIdKey({ dayObs: 20240101, seqNum: s }));
+const series: SeriesSpec = {
+  id: 's',
+  name: 's',
+  x: new Float64Array([0, 1]),
+  y: new Float64Array([1, 2]),
+  dataIds: ids,
+  marker: { color: '#000', size: 3 },
+};
+const num: AxisSpec = {
+  location: 'bottom',
+  label: 'x',
+  mapping: 'linear',
+  inverted: false,
+  kind: 'number',
+};
+
+describe('tick labels', () => {
+  it('hide overlapping labels on every axis and truncate long category labels', () => {
+    expect(tickLabelStyle('number')).toEqual({ hideOverlap: true });
+    expect(tickLabelStyle('category')).toMatchObject({
+      hideOverlap: true,
+      overflow: 'truncate',
+      width: TICK_LABEL_MAX_PX,
+    });
+    const opt = buildScatterOption({
+      series: [series],
+      xAxis: { ...num, kind: 'category', categories: ['a long category label', 'b'] },
+      yAxis: { ...num, location: 'left' },
+      selected: new Set(),
+      drillDown: null,
+    }) as any;
+    expect(opt.xAxis.axisLabel).toMatchObject({ overflow: 'truncate', hideOverlap: true });
+    expect(opt.yAxis.axisLabel).toEqual({ hideOverlap: true });
+    const h = buildHistogramOption({
+      series: [{ id: 'h', name: 'h', values: new Float64Array([0, 1]), color: '#000' }],
+      mainAxis: { ...num, kind: 'datetime', mjdLabels: true },
+      nBins: 2,
+      selected: new Map(),
+    }) as any;
+    expect(h.xAxis.axisLabel.hideOverlap).toBe(true);
+    expect(typeof h.xAxis.axisLabel.formatter).toBe('function');
+  });
+});

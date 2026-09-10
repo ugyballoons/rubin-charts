@@ -2,6 +2,7 @@ import type { EChartsCoreOption } from 'echarts/core';
 import type { AxisSpec, SeriesSpec } from '../../adapter';
 import type { DataIdKey } from '../../core/dataId';
 import { SELECTION_SERIES_ID } from './scatterOption';
+import { tickLabelStyle } from './axisLabels';
 
 export type AngleUnit = 'degrees' | 'radians';
 
@@ -111,6 +112,7 @@ export function buildPolarOption(input: PolarOptionInput): EChartsCoreOption {
     nameGap: 22,
     inverse: radial.inverted,
     scale: true,
+    axisLabel: tickLabelStyle(radial.mapping === 'linear' ? 'number' : 'log'),
     ...(radial.fixedBounds && { min: radial.fixedBounds.min, max: radial.fixedBounds.max }),
   };
   const angleAxis: Record<string, unknown> = {
@@ -120,12 +122,12 @@ export function buildPolarOption(input: PolarOptionInput): EChartsCoreOption {
     interval: 45,
     startAngle: 90, // zero at the top
     clockwise: !input.angularAxis.inverted,
-    axisLabel: {
+    axisLabel: tickLabelStyle('number', {
       formatter:
         unit === 'radians'
           ? (v: number) => radiansLabel(v)
           : (v: number) => (v === 360 ? '' : `${v}°`),
-    },
+    }),
   };
 
   return {

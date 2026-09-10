@@ -3,6 +3,7 @@ import type { AxisSpec } from '../../adapter';
 import { binValues, pixelSpaceBinEdges, type BinCounts, type Bounds } from '../../core/binning';
 import { mappingFor } from '../../core/mapping';
 import { msToMjd } from './scatterOption';
+import { tickLabelStyle } from './axisLabels';
 
 export interface HistogramSeriesInput {
   readonly id: string;
@@ -159,10 +160,18 @@ export function buildHistogramOption(
     ...(kind === 'category' && {
       data: input.mainAxis.categories ? [...input.mainAxis.categories] : undefined,
     }),
-    ...(kind === 'datetime' &&
-      input.mainAxis.mjdLabels && {
-        axisLabel: { formatter: (v: number) => msToMjd(v).toFixed(3) },
-      }),
+    axisLabel: tickLabelStyle(
+      kind === 'datetime'
+        ? 'datetime'
+        : kind === 'category'
+          ? 'category'
+          : input.mainAxis.mapping === 'linear'
+            ? 'number'
+            : 'log',
+      kind === 'datetime' && input.mainAxis.mjdLabels
+        ? { formatter: (v: number) => msToMjd(v).toFixed(3) }
+        : {},
+    ),
     ...(kind === 'number' &&
       input.mainAxis.mapping !== 'linear' && {
         logBase: input.mainAxis.mapping === 'log10' ? 10 : Math.E,
@@ -177,6 +186,7 @@ export function buildHistogramOption(
   };
   const countOption = {
     type: 'value',
+    axisLabel: tickLabelStyle('number'),
     name: 'count',
     nameLocation: 'middle',
     nameGap: 40,
