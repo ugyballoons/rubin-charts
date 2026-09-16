@@ -67,7 +67,7 @@ describe('box statistics', () => {
     expect(opt.series[0].data).toHaveLength(2);
     expect(opt.series[0].data[0][7]).toBe(0);
     expect(opt.series[0].data[1][7]).toBe(4);
-    expect(opt.yAxis.name).toBe('y');
+    expect(opt.yAxis[0].name).toBe('y');
   });
 });
 
@@ -92,6 +92,71 @@ describe('box option: integer main axis', () => {
     expect(bins.edges).toEqual([0.5, 1.5, 2.5, 3.5]);
     const opt = buildBoxOption(input, bins) as any;
     expect(opt.xAxis.minInterval).toBe(1);
-    expect(opt.yAxis.minInterval).toBeUndefined();
+    expect(opt.yAxis[0].minInterval).toBeUndefined();
+  });
+});
+
+describe('box option: twin cross axes', () => {
+  const sky = {
+    id: 'sky',
+    name: 'sky',
+    main: [0, 1, 9, 10],
+    cross: [1e3, 3e3, 5e3, 7e3],
+    color: '#058b8c',
+  };
+  const wind = {
+    id: 'wind',
+    name: 'wind',
+    main: [0, 1, 9, 10],
+    cross: [1, 3, 5, 7],
+    color: '#e6194b',
+    crossAxisIndex: 1 as const,
+  };
+  const secondaryCrossAxis: AxisSpec = { ...crossAxis, location: 'right', label: 'wind' };
+
+  it('draws a right-hand axis and summarises each series against its own', () => {
+    const opt = buildBoxOption({
+      series: [sky, wind],
+      mainAxis,
+      crossAxis,
+      secondaryCrossAxis,
+      nBins: 5,
+      selected: new Map(),
+    }) as any;
+    expect(opt.yAxis).toHaveLength(2);
+    expect(opt.yAxis[1]).toMatchObject({ position: 'right', name: 'wind' });
+    expect(opt.series[0].yAxisIndex).toBe(0);
+    expect(opt.series[1].yAxisIndex).toBe(1);
+    expect(opt.yAxis[0].axisLine.lineStyle.color).toBe('#058b8c');
+    expect(opt.yAxis[1].axisLabel.color).toBe('#e6194b');
+    expect(opt.grid.right).toBe(opt.grid.left);
+  });
+
+  it('puts the secondary axis on top for a horizontal chart', () => {
+    const opt = buildBoxOption({
+      series: [sky, wind],
+      mainAxis: { ...mainAxis, location: 'left' },
+      crossAxis: { ...crossAxis, location: 'bottom' },
+      secondaryCrossAxis: { ...secondaryCrossAxis, location: 'top' },
+      nBins: 5,
+      selected: new Map(),
+    }) as any;
+    expect(opt.xAxis).toHaveLength(2);
+    expect(opt.xAxis[1].position).toBe('top');
+    expect(opt.series[1].xAxisIndex).toBe(1);
+    expect(opt.yAxis.name).toBe('x');
+  });
+
+  it('ignores crossAxisIndex without a secondary axis', () => {
+    const opt = buildBoxOption({
+      series: [sky, wind],
+      mainAxis,
+      crossAxis,
+      nBins: 5,
+      selected: new Map(),
+    }) as any;
+    expect(opt.yAxis).toHaveLength(1);
+    expect(opt.series[1].yAxisIndex).toBe(0);
+    expect(opt.yAxis[0].axisLine).toBeUndefined();
   });
 });

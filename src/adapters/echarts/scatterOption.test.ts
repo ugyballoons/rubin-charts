@@ -36,7 +36,9 @@ describe('buildScatterOption', () => {
       drillDown: null,
     }) as any;
     expect(opt.xAxis.type).toBe('value');
-    expect(opt.yAxis).toMatchObject({ type: 'log', logBase: 10, inverse: true });
+    expect(opt.yAxis).toEqual([
+      expect.objectContaining({ type: 'log', logBase: 10, inverse: true }),
+    ]);
     expect(opt.dataZoom[0]).toMatchObject({ moveOnMouseWheel: true, zoomOnMouseWheel: 'shift' });
   });
 
@@ -78,9 +80,10 @@ describe('buildScatterOption', () => {
   });
 
   it('exposes the overlay alone for merge updates', () => {
-    const overlay = selectionOverlaySeries([series], new Set([ids[0], ids[2]])) as any;
-    expect(overlay.id).toBe('__selected__');
-    expect(overlay.data).toEqual([
+    const overlays = selectionOverlaySeries([series], new Set([ids[0], ids[2]])) as any[];
+    expect(overlays).toHaveLength(1);
+    expect(overlays[0].id).toBe('__selected__');
+    expect(overlays[0].data).toEqual([
       [1, 4],
       [3, 6],
     ]);
@@ -113,7 +116,7 @@ describe('integer axes', () => {
       drillDown: null,
     }) as any;
     expect(opt.xAxis.minInterval).toBe(1);
-    expect(opt.yAxis.minInterval).toBe(1);
+    expect(opt.yAxis[0].minInterval).toBe(1);
     expect(
       (
         buildScatterOption({
@@ -152,6 +155,81 @@ describe('identifier axes', () => {
       drillDown: null,
     }) as any;
     expect(opt.xAxis.axisLabel.formatter(2025090800004)).toBe('2025090800004');
-    expect(opt.yAxis.axisLabel.formatter).toBeUndefined();
+    expect(opt.yAxis[0].axisLabel.formatter).toBeUndefined();
+  });
+});
+
+describe('twin y axes', () => {
+  const wind: SeriesSpec = {
+    ...series,
+    id: 's2',
+    name: 'wind',
+    y: new Float64Array([0.1, 0.2, 0.3]),
+    dataIds: [4, 5, 6].map((n) => dataIdKey({ dayObs: 20240101, seqNum: n })),
+    marker: { color: '#e6194b', size: 5 },
+    yAxisIndex: 1,
+  };
+  const secondaryYAxis: AxisSpec = {
+    location: 'right',
+    label: 'wind_speed',
+    mapping: 'linear',
+    inverted: false,
+    kind: 'number',
+  };
+  const twin = () =>
+    buildScatterOption({
+      series: [series, wind],
+      xAxis,
+      yAxis,
+      secondaryYAxis,
+      selected: new Set([ids[0], wind.dataIds[1]]),
+      drillDown: null,
+    }) as any;
+
+  it('draws a right-hand axis and points each series at its own', () => {
+    const opt = twin();
+    expect(opt.yAxis).toHaveLength(2);
+    expect(opt.yAxis[1]).toMatchObject({ position: 'right', name: 'wind_speed', type: 'value' });
+    expect(opt.series.find((s: any) => s.id === 's1').yAxisIndex).toBe(0);
+    expect(opt.series.find((s: any) => s.id === 's2').yAxisIndex).toBe(1);
+    expect(opt.dataZoom[1].yAxisIndex).toEqual([0, 1]);
+  });
+
+  it('colours each axis after the series drawn against it', () => {
+    const opt = twin();
+    expect(opt.yAxis[0].axisLine.lineStyle.color).toBe('#058b8c');
+    expect(opt.yAxis[0].axisLabel.color).toBe('#058b8c');
+    expect(opt.yAxis[1].nameTextStyle.color).toBe('#e6194b');
+    // A lone axis stays in the default colour.
+    const single = buildScatterOption({
+      series: [series],
+      xAxis,
+      yAxis,
+      selected: new Set(),
+      drillDown: null,
+    }) as any;
+    expect(single.yAxis[0].axisLine).toBeUndefined();
+    expect(single.yAxis[0].axisLabel.color).toBeUndefined();
+  });
+
+  it('marks selected points against the axis of their series', () => {
+    const opt = twin();
+    const left = opt.series.find((s: any) => s.id === '__selected__');
+    const right = opt.series.find((s: any) => s.id === '__selected__1');
+    expect(left).toMatchObject({ yAxisIndex: 0, data: [[1, 4]] });
+    expect(right).toMatchObject({ yAxisIndex: 1, data: [[2, 0.2]] });
+  });
+
+  it('ignores yAxisIndex without a secondary axis to draw against', () => {
+    const opt = buildScatterOption({
+      series: [series, wind],
+      xAxis,
+      yAxis,
+      selected: new Set(),
+      drillDown: null,
+    }) as any;
+    expect(opt.yAxis).toHaveLength(1);
+    expect(opt.series.find((s: any) => s.id === 's2').yAxisIndex).toBe(0);
+    expect(opt.series.filter((s: any) => s.name === 'selected')).toHaveLength(1);
   });
 });

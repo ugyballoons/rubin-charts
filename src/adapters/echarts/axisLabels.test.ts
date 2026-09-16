@@ -37,7 +37,7 @@ describe('tick labels', () => {
       drillDown: null,
     }) as any;
     expect(opt.xAxis.axisLabel).toMatchObject({ overflow: 'truncate', hideOverlap: true });
-    expect(opt.yAxis.axisLabel).toEqual({ hideOverlap: true });
+    expect(opt.yAxis[0].axisLabel).toEqual({ hideOverlap: true });
     const h = buildHistogramOption({
       series: [{ id: 'h', name: 'h', values: new Float64Array([0, 1]), color: '#000' }],
       mainAxis: { ...num, kind: 'datetime', mjdLabels: true },

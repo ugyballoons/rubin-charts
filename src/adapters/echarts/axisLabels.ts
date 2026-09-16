@@ -93,3 +93,28 @@ export function tickFormatter(axis: { plainDigits?: boolean }): (v: number) => s
 export function numberAxisLabel(axis: { plainDigits?: boolean }): Record<string, unknown> {
   return tickLabelStyle('number', axis.plainDigits ? { formatter: plainDigitsLabel } : {});
 }
+
+/**
+ * Twin y axes are told apart by colour: an axis takes the colour of the
+ * series drawn against it when they all share one, else none. A lone axis is
+ * never coloured, so callers pass `undefined` unless two axes are shown.
+ */
+export function sharedColor(colors: Iterable<string>): string | undefined {
+  const set = new Set(colors);
+  return set.size === 1 ? [...set][0] : undefined;
+}
+
+/** The axis option with its line, ticks, labels and title tinted in `color`; unchanged when none. */
+export function tintAxis(
+  axis: Record<string, unknown>,
+  color: string | undefined,
+): Record<string, unknown> {
+  if (!color) return axis;
+  return {
+    ...axis,
+    nameTextStyle: { ...(axis.nameTextStyle as object), color },
+    axisLabel: { ...(axis.axisLabel as object), color },
+    axisLine: { show: true, lineStyle: { color } },
+    axisTick: { show: true, lineStyle: { color } },
+  };
+}

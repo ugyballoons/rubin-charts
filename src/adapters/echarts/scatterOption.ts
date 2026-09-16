@@ -4,7 +4,9 @@ import type { DataIdKey } from '../../core/dataId';
 import {
   GRID_LEFT,
   numberAxisLabel,
+  sharedColor,
   tickFormatter,
+  tintAxis,
   tickLabelStyle,
   verticalNameGap,
 } from './axisLabels';
@@ -12,10 +14,15 @@ import {
 const MJD_EPOCH_MS = Date.UTC(1858, 10, 17);
 export const msToMjd = (ms: number): number => (ms - MJD_EPOCH_MS) / 86_400_000;
 
-function axisOption(axis: AxisSpec, values?: ArrayLike<number>) {
+function axisOption(axis: AxisSpec, values?: ArrayLike<number>, color?: string) {
+  return tintAxis(plainAxisOption(axis, values), color);
+}
+
+function plainAxisOption(axis: AxisSpec, values?: ArrayLike<number>): Record<string, unknown> {
   const vertical = axis.location === 'left' || axis.location === 'right';
   const base: Record<string, unknown> = {
     name: axis.label,
+    position: axis.location,
     inverse: axis.inverted,
     scale: true,
     nameLocation: 'middle',
@@ -88,6 +95,11 @@ export interface ScatterOptionInput {
   readonly series: readonly SeriesSpec[];
   readonly xAxis: AxisSpec;
   readonly yAxis: AxisSpec;
+  /**
+   * A second y axis on the right for series with `yAxisIndex` 1. Without it
+   * every series is drawn against `yAxis` whatever its index says.
+   */
+  readonly secondaryYAxis?: AxisSpec;
   readonly selected: ReadonlySet<DataIdKey>;
   readonly drillDown: ReadonlySet<DataIdKey> | null;
   /** Above this many points per series, ECharts large mode and progressive rendering are enabled. */
@@ -102,6 +114,9 @@ export function buildScatterOption(input: ScatterOptionInput): EChartsCoreOption
   const largeThreshold = input.largeThreshold ?? 5000;
   const series: Record<string, unknown>[] = [];
   const datasets: Record<string, unknown>[] = [];
+  const twin = !!input.secondaryYAxis;
+  const axisIndexOf = (s: SeriesSpec) => (twin ? (s.yAxisIndex ?? 0) : 0);
+  const onAxis = (k: 0 | 1) => input.series.filter((s) => axisIndexOf(s) === k);
 
   input.series.forEach((s, i) => {
     const filtered = input.drillDown ? maskSeries(s, input.drillDown) : s;
@@ -112,6 +127,7 @@ export function buildScatterOption(input: ScatterOptionInput): EChartsCoreOption
       name: s.name,
       type: 'scatter',
       datasetIndex: i,
+      yAxisIndex: axisIndexOf(s),
       symbolSize: s.marker.size,
       itemStyle: { color: s.marker.color, borderColor: s.marker.edgeColor },
       large,
@@ -121,7 +137,16 @@ export function buildScatterOption(input: ScatterOptionInput): EChartsCoreOption
     });
   });
 
-  series.push(selectionOverlaySeries(input.series, input.selected));
+  series.push(...selectionOverlaySeries(input.series, input.selected, largeThreshold, twin));
+
+  const colorOf = (k: 0 | 1) =>
+    twin ? sharedColor(onAxis(k).map((s) => s.marker.color)) : undefined;
+  const yAxes = [axisOption(input.yAxis, onAxis(0)[0]?.y, colorOf(0))];
+  if (input.secondaryYAxis) {
+    yAxes.push(
+      axisOption({ ...input.secondaryYAxis, location: 'right' }, onAxis(1)[0]?.y, colorOf(1)),
+    );
+  }
 
   return {
     animation: false,
@@ -129,8 +154,15 @@ export function buildScatterOption(input: ScatterOptionInput): EChartsCoreOption
     useUTC: true,
     dataset: datasets,
     xAxis: axisOption(input.xAxis),
-    yAxis: axisOption(input.yAxis, input.series[0]?.y),
-    grid: { containLabel: true, left: GRID_LEFT, right: 16, top: 16, bottom: 36 },
+    yAxis: yAxes,
+    // The right margin makes the same room for a secondary axis title as the left does.
+    grid: {
+      containLabel: true,
+      left: GRID_LEFT,
+      right: twin ? GRID_LEFT : 16,
+      top: 16,
+      bottom: 36,
+    },
     dataZoom: [
       {
         type: 'inside',
@@ -142,7 +174,8 @@ export function buildScatterOption(input: ScatterOptionInput): EChartsCoreOption
       },
       {
         type: 'inside',
-        yAxisIndex: 0,
+        // One zoom drives both y axes so they stay in step.
+        yAxisIndex: twin ? [0, 1] : 0,
         moveOnMouseWheel: true,
         zoomOnMouseWheel: 'shift',
         moveOnMouseMove: false,
@@ -170,23 +203,44 @@ function maskSeries(s: SeriesSpec, keep: ReadonlySet<DataIdKey>): SeriesSpec {
 }
 
 export const SELECTION_SERIES_ID = '__selected__';
+/** Id of the overlay for the y axis at `index`: the primary keeps the bare id. */
+export const selectionSeriesId = (index: 0 | 1): string =>
+  index === 0 ? SELECTION_SERIES_ID : `${SELECTION_SERIES_ID}${index}`;
 
 /**
- * The overlay series that marks selected points. Send it alone through
- * `setOption({ series: [overlay] })` (merge mode) on every selection change so
- * the base datasets are never re-uploaded.
+ * The overlay series that mark selected points, one per y axis in use so each
+ * point is drawn against the axis of its series. Send them alone through
+ * `setOption({ series: overlays })` (merge mode) on every selection change so
+ * the base datasets are never re-uploaded. The two overlays share one size
+ * rule, so a large brush spanning both axes looks the same on each.
  */
 export function selectionOverlaySeries(
   series: readonly SeriesSpec[],
   selected: ReadonlySet<DataIdKey>,
   largeThreshold = 5000,
+  twinAxes = series.some((s) => s.yAxisIndex === 1),
+): Record<string, unknown>[] {
+  const axes: (0 | 1)[] = twinAxes ? [0, 1] : [0];
+  const perAxis = axes.map((k) =>
+    series
+      .filter((s) => (twinAxes ? (s.yAxisIndex ?? 0) : 0) === k)
+      .flatMap((s) => pickSelected(s, selected)),
+  );
+  const total = perAxis.reduce((n, d) => n + d.length, 0);
+  const large = total > largeThreshold;
+  return axes.map((k, i) => selectionOverlay(k, perAxis[i], large));
+}
+
+function selectionOverlay(
+  axisIndex: 0 | 1,
+  data: [number | string, number][],
+  large: boolean,
 ): Record<string, unknown> {
-  const data = series.flatMap((s) => pickSelected(s, selected));
-  const large = data.length > largeThreshold;
   return {
-    id: SELECTION_SERIES_ID,
+    id: selectionSeriesId(axisIndex),
     name: 'selected',
     type: 'scatter',
+    yAxisIndex: axisIndex,
     data,
     // A few points get a ring; a large brush gets a solid, smaller mark so the
     // overlay stays legible and cheap to draw.

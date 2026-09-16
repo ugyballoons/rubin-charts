@@ -1,12 +1,15 @@
 import type { EChartsCoreOption } from 'echarts/core';
 import type { AxisSpec } from '../../adapter';
+import type { YAxisIndex } from '../../core/yAxes';
 import { binValues, integerBinEdges, pixelSpaceBinEdges, type Bounds } from '../../core/binning';
 import { mappingFor } from '../../core/mapping';
 import {
   GRID_LEFT,
   numberAxisLabel,
+  sharedColor,
   tickFormatter,
   tickLabelStyle,
+  tintAxis,
   verticalNameGap,
 } from './axisLabels';
 
@@ -18,12 +21,19 @@ export interface BoxSeriesInput {
   /** Values summarised per bin (cross axis). */
   readonly cross: ArrayLike<number>;
   readonly color: string;
+  /** Which cross axis the boxes are drawn against, 0 the primary and 1 the secondary. See `assignYAxes`. */
+  readonly crossAxisIndex?: YAxisIndex;
 }
 
 export interface BoxOptionInput {
   readonly series: readonly BoxSeriesInput[];
   readonly mainAxis: AxisSpec;
   readonly crossAxis: AxisSpec;
+  /**
+   * A second cross axis on the far side for series with `crossAxisIndex` 1.
+   * Without it every series is summarised against `crossAxis`.
+   */
+  readonly secondaryCrossAxis?: AxisSpec;
   readonly nBins: number;
   readonly bounds?: Bounds;
   readonly selected: ReadonlyMap<string, ReadonlySet<number>>;
@@ -118,6 +128,9 @@ export function buildBoxOption(
 ): EChartsCoreOption {
   const vertical = input.mainAxis.location === 'bottom' || input.mainAxis.location === 'top';
   const nSeries = input.series.length;
+  const twin = !!input.secondaryCrossAxis;
+  const axisIndexOf = (s: BoxSeriesInput) => (twin ? (s.crossAxisIndex ?? 0) : 0);
+  const onAxis = (k: 0 | 1) => input.series.filter((s) => axisIndexOf(s) === k);
 
   const series = input.series.map((s, k) => {
     const stats = bins.perSeries.get(s.id)!;
@@ -134,6 +147,7 @@ export function buildBoxOption(
       name: s.name,
       type: 'custom',
       encode: vertical ? { x: [0, 1], y: [2, 6] } : { y: [0, 1], x: [2, 6] },
+      [vertical ? 'yAxisIndex' : 'xAxisIndex']: axisIndexOf(s),
       data,
       clip: true,
       renderItem: (
@@ -211,18 +225,32 @@ export function buildBoxOption(
     ...extra,
   });
   const main = axis(input.mainAxis, {});
-  const cross = axis(input.crossAxis, {
-    nameGap: vertical
-      ? verticalNameGap(input.series[0]?.cross, 30, tickFormatter(input.crossAxis))
-      : 30,
-  });
+  // With twin cross axes each takes the colour of its series, when they share one.
+  const crossAxis = (spec: AxisSpec, k: 0 | 1, position: string) =>
+    tintAxis(
+      axis(spec, {
+        position,
+        nameGap: vertical ? verticalNameGap(onAxis(k)[0]?.cross, 30, tickFormatter(spec)) : 30,
+      }),
+      twin ? sharedColor(onAxis(k).map((s) => s.color)) : undefined,
+    );
+  const cross = [crossAxis(input.crossAxis, 0, vertical ? 'left' : 'bottom')];
+  if (input.secondaryCrossAxis)
+    cross.push(crossAxis(input.secondaryCrossAxis, 1, vertical ? 'right' : 'top'));
   return {
     animation: false,
     // Time axes tick and label in UTC, the zone the data and tooltips use.
     useUTC: true,
     xAxis: vertical ? main : cross,
     yAxis: vertical ? cross : main,
-    grid: { containLabel: true, left: GRID_LEFT, right: 16, top: 16, bottom: 36 },
+    grid: {
+      containLabel: true,
+      left: GRID_LEFT,
+      // The far margin makes the same room for a secondary axis title as the near one.
+      right: twin && vertical ? GRID_LEFT : 16,
+      top: twin && !vertical ? 36 : 16,
+      bottom: 36,
+    },
     series,
   };
 }

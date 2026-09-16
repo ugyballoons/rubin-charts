@@ -1,5 +1,6 @@
 import type { DataIdKey } from './core/dataId';
 import type { MappingKind } from './core/mapping';
+import type { YAxisIndex } from './core/yAxes';
 
 export type SeriesId = string;
 export type AxisLocation = 'left' | 'right' | 'top' | 'bottom' | 'radial' | 'angular';
@@ -18,6 +19,12 @@ export interface SeriesSpec {
   /** One key per point, aligned with x/y. */
   readonly dataIds: readonly DataIdKey[];
   readonly marker: Marker;
+  /**
+   * Cartesian charts: which y axis the series is drawn against, 0 the primary
+   * (left) and 1 the secondary (right). Absent means the primary. See
+   * `assignYAxes` for the policy that decides this.
+   */
+  readonly yAxisIndex?: YAxisIndex;
 }
 
 export interface AxisBounds {

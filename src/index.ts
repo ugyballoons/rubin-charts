@@ -4,6 +4,7 @@ export * from './core/mapping';
 export * from './core/binning';
 export * from './core/pointIndex';
 export * from './core/binSelection';
+export * from './core/yAxes';
 export * from './adapters/echarts/scatterOption';
 export * from './adapters/echarts/histogramOption';
 export * from './adapters/echarts/polarOption';
