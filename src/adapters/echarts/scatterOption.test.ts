@@ -127,3 +127,31 @@ describe('integer axes', () => {
     ).toBeUndefined();
   });
 });
+
+describe('time axes', () => {
+  it('tick and label in UTC, matching the data and tooltips', () => {
+    const opt = buildScatterOption({
+      series: [series],
+      xAxis: { ...xAxis, kind: 'datetime' },
+      yAxis,
+      selected: new Set(),
+      drillDown: null,
+    }) as any;
+    expect(opt.useUTC).toBe(true);
+    expect(opt.xAxis.type).toBe('time');
+  });
+});
+
+describe('identifier axes', () => {
+  it('label ticks as plain digits without thousands separators', () => {
+    const opt = buildScatterOption({
+      series: [series],
+      xAxis: { ...xAxis, integer: true, plainDigits: true },
+      yAxis: { ...yAxis, mapping: 'linear', integer: true },
+      selected: new Set(),
+      drillDown: null,
+    }) as any;
+    expect(opt.xAxis.axisLabel.formatter(2025090800004)).toBe('2025090800004');
+    expect(opt.yAxis.axisLabel.formatter).toBeUndefined();
+  });
+});

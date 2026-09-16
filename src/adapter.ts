@@ -37,6 +37,12 @@ export interface AxisSpec {
    * are integer-wide with edges at half-integers, so no value sits on an edge.
    */
   readonly integer?: boolean;
+  /**
+   * For integer axes: tick labels are plain digits without thousands
+   * separators, so identifiers such as exposure ids read as one number
+   * (2025090800004, not 2,025,090,800,004).
+   */
+  readonly plainDigits?: boolean;
   /** For datetime axes: label ticks as Modified Julian Date instead of calendar dates. */
   readonly mjdLabels?: boolean;
   /** For category axes: the labels; series values are indices into this list. */

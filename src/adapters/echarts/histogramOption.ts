@@ -9,7 +9,7 @@ import {
 } from '../../core/binning';
 import { mappingFor } from '../../core/mapping';
 import { msToMjd } from './scatterOption';
-import { GRID_LEFT, tickLabelStyle, verticalNameGap } from './axisLabels';
+import { GRID_LEFT, plainDigitsLabel, tickLabelStyle, verticalNameGap } from './axisLabels';
 
 export interface HistogramSeriesInput {
   readonly id: string;
@@ -179,7 +179,9 @@ export function buildHistogramOption(
             : 'log',
       kind === 'datetime' && input.mainAxis.mjdLabels
         ? { formatter: (v: number) => msToMjd(v).toFixed(3) }
-        : {},
+        : kind === 'number' && input.mainAxis.mapping === 'linear' && input.mainAxis.plainDigits
+          ? { formatter: plainDigitsLabel }
+          : {},
     ),
     ...(kind === 'number' &&
       input.mainAxis.mapping !== 'linear' && {
@@ -214,6 +216,8 @@ export function buildHistogramOption(
 
   return {
     animation: false,
+    // Time axes tick and label in UTC, the zone the data and tooltips use.
+    useUTC: true,
     xAxis: vertical ? mainOption : countOption,
     yAxis: vertical ? countOption : mainOption,
     grid: { containLabel: true, left: GRID_LEFT, right: 16, top: 16, bottom: 36 },

@@ -2,7 +2,13 @@ import type { EChartsCoreOption } from 'echarts/core';
 import type { AxisSpec } from '../../adapter';
 import { binValues, integerBinEdges, pixelSpaceBinEdges, type Bounds } from '../../core/binning';
 import { mappingFor } from '../../core/mapping';
-import { GRID_LEFT, tickLabelStyle, verticalNameGap } from './axisLabels';
+import {
+  GRID_LEFT,
+  numberAxisLabel,
+  tickFormatter,
+  tickLabelStyle,
+  verticalNameGap,
+} from './axisLabels';
 
 export interface BoxSeriesInput {
   readonly id: string;
@@ -200,16 +206,20 @@ export function buildBoxOption(
     nameTextStyle: { fontWeight: 'bold' },
     inverse: a.inverted,
     scale: true,
-    axisLabel: tickLabelStyle(a.mapping === 'linear' ? 'number' : 'log'),
+    axisLabel: a.mapping === 'linear' ? numberAxisLabel(a) : tickLabelStyle('log'),
     ...(a.mapping === 'linear' && a.integer && { minInterval: 1 }),
     ...extra,
   });
   const main = axis(input.mainAxis, {});
   const cross = axis(input.crossAxis, {
-    nameGap: vertical ? verticalNameGap(input.series[0]?.cross) : 30,
+    nameGap: vertical
+      ? verticalNameGap(input.series[0]?.cross, 30, tickFormatter(input.crossAxis))
+      : 30,
   });
   return {
     animation: false,
+    // Time axes tick and label in UTC, the zone the data and tooltips use.
+    useUTC: true,
     xAxis: vertical ? main : cross,
     yAxis: vertical ? cross : main,
     grid: { containLabel: true, left: GRID_LEFT, right: 16, top: 16, bottom: 36 },

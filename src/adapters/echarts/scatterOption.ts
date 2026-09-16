@@ -1,7 +1,13 @@
 import type { EChartsCoreOption } from 'echarts/core';
 import type { AxisSpec, SeriesSpec } from '../../adapter';
 import type { DataIdKey } from '../../core/dataId';
-import { GRID_LEFT, tickLabelStyle, verticalNameGap } from './axisLabels';
+import {
+  GRID_LEFT,
+  numberAxisLabel,
+  tickFormatter,
+  tickLabelStyle,
+  verticalNameGap,
+} from './axisLabels';
 
 const MJD_EPOCH_MS = Date.UTC(1858, 10, 17);
 export const msToMjd = (ms: number): number => (ms - MJD_EPOCH_MS) / 86_400_000;
@@ -13,7 +19,7 @@ function axisOption(axis: AxisSpec, values?: ArrayLike<number>) {
     inverse: axis.inverted,
     scale: true,
     nameLocation: 'middle',
-    nameGap: vertical ? verticalNameGap(values) : 30,
+    nameGap: vertical ? verticalNameGap(values, 30, tickFormatter(axis)) : 30,
     nameTextStyle: { fontWeight: 'bold' },
   };
   if (axis.kind === 'category') {
@@ -39,7 +45,7 @@ function axisOption(axis: AxisSpec, values?: ArrayLike<number>) {
     return {
       ...base,
       type: 'value',
-      axisLabel: tickLabelStyle('number'),
+      axisLabel: numberAxisLabel(axis),
       ...(axis.integer && { minInterval: 1 }),
     };
   const logBase = axis.mapping === 'log10' ? 10 : Math.E;
@@ -119,6 +125,8 @@ export function buildScatterOption(input: ScatterOptionInput): EChartsCoreOption
 
   return {
     animation: false,
+    // Time axes tick and label in UTC, the zone the data and tooltips use.
+    useUTC: true,
     dataset: datasets,
     xAxis: axisOption(input.xAxis),
     yAxis: axisOption(input.yAxis, input.series[0]?.y),

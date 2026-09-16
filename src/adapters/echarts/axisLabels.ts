@@ -54,7 +54,11 @@ export const GRID_LEFT = 30;
  * label the axis is likely to show (its extremes), so the title never sits on
  * the labels however long the numbers get.
  */
-export function verticalNameGap(values: ArrayLike<number> | undefined, minimum = 30): number {
+export function verticalNameGap(
+  values: ArrayLike<number> | undefined,
+  minimum = 30,
+  format: (v: number) => string = formatTick,
+): number {
   if (!values || values.length === 0) return minimum;
   let lo = Infinity;
   let hi = -Infinity;
@@ -65,9 +69,27 @@ export function verticalNameGap(values: ArrayLike<number> | undefined, minimum =
   }
   if (!Number.isFinite(lo)) return minimum;
   const widest = Math.max(
-    measureLabel(formatTick(lo)),
-    measureLabel(formatTick(hi)),
-    measureLabel(formatTick(Math.max(Math.abs(lo), Math.abs(hi)))),
+    measureLabel(format(lo)),
+    measureLabel(format(hi)),
+    measureLabel(format(Math.max(Math.abs(lo), Math.abs(hi)))),
   );
   return Math.max(minimum, Math.ceil(widest) + 14);
+}
+
+/**
+ * Tick label as plain digits, no thousands separators, for identifier axes
+ * (exposure ids, visit ids): 2025090800004 rather than 2,025,090,800,004.
+ */
+export function plainDigitsLabel(v: number): string {
+  return Number.isFinite(v) ? String(Number(v.toPrecision(15))) : '';
+}
+
+/** The tick formatter an axis measures and draws with: plain digits when asked for, else ECharts' default. */
+export function tickFormatter(axis: { plainDigits?: boolean }): (v: number) => string {
+  return axis.plainDigits ? plainDigitsLabel : formatTick;
+}
+
+/** axisLabel for a linear number axis: plain digits when the spec asks for them, else ECharts' default. */
+export function numberAxisLabel(axis: { plainDigits?: boolean }): Record<string, unknown> {
+  return tickLabelStyle('number', axis.plainDigits ? { formatter: plainDigitsLabel } : {});
 }

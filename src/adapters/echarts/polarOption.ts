@@ -2,7 +2,7 @@ import type { EChartsCoreOption } from 'echarts/core';
 import type { AxisSpec, SeriesSpec } from '../../adapter';
 import type { DataIdKey } from '../../core/dataId';
 import { SELECTION_SERIES_ID } from './scatterOption';
-import { tickLabelStyle } from './axisLabels';
+import { numberAxisLabel, tickLabelStyle } from './axisLabels';
 
 export type AngleUnit = 'degrees' | 'radians';
 
@@ -112,7 +112,7 @@ export function buildPolarOption(input: PolarOptionInput): EChartsCoreOption {
     nameGap: 22,
     inverse: radial.inverted,
     scale: true,
-    axisLabel: tickLabelStyle(radial.mapping === 'linear' ? 'number' : 'log'),
+    axisLabel: radial.mapping === 'linear' ? numberAxisLabel(radial) : tickLabelStyle('log'),
     ...(radial.mapping === 'linear' && radial.integer && { minInterval: 1 }),
     ...(radial.fixedBounds && { min: radial.fixedBounds.min, max: radial.fixedBounds.max }),
   };
@@ -133,6 +133,8 @@ export function buildPolarOption(input: PolarOptionInput): EChartsCoreOption {
 
   return {
     animation: false,
+    // Time axes tick and label in UTC, the zone the data and tooltips use.
+    useUTC: true,
     dataset: datasets,
     polar: { radius: ['0%', '80%'] },
     radiusAxis,
