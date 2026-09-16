@@ -25,6 +25,23 @@ export function pixelSpaceBinEdges(nBins: number, bounds: Bounds, mapping: Mappi
   return edges;
 }
 
+/**
+ * Bin edges for whole-number data: at most nBins bins, each an integer number
+ * of values wide, with edges at half-integers so every value sits strictly
+ * inside a bin. Bounds are widened to whole bins, so the last edge may exceed
+ * bounds.max by less than one bin width.
+ */
+export function integerBinEdges(nBins: number, bounds: Bounds): number[] {
+  if (!Number.isInteger(nBins) || nBins < 1)
+    throw new RangeError(`nBins must be >= 1, got ${nBins}`);
+  const lo = Math.floor(bounds.min);
+  const hi = Math.ceil(bounds.max);
+  const span = hi - lo + 1;
+  const width = Math.max(1, Math.ceil(span / nBins));
+  const n = Math.ceil(span / width);
+  return Array.from({ length: n + 1 }, (_, i) => lo - 0.5 + i * width);
+}
+
 /** Index of the bin containing `value`, or -1 when outside [edges[0], edges[n]]. */
 export function binIndex(edges: readonly number[], value: number): number {
   const n = edges.length - 1;

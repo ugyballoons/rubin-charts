@@ -70,3 +70,28 @@ describe('box statistics', () => {
     expect(opt.yAxis.name).toBe('y');
   });
 });
+
+describe('box option: integer main axis', () => {
+  it('bins whole values with half-integer edges and integer-only ticks', () => {
+    const input = {
+      series: [
+        {
+          id: 'b',
+          name: 'b',
+          main: new Float64Array([1, 2, 2, 3]),
+          cross: new Float64Array([10, 20, 30, 40]),
+          color: '#000',
+        },
+      ],
+      mainAxis: { ...mainAxis, integer: true },
+      crossAxis,
+      nBins: 10,
+      selected: new Map(),
+    };
+    const bins = computeBoxBins(input);
+    expect(bins.edges).toEqual([0.5, 1.5, 2.5, 3.5]);
+    const opt = buildBoxOption(input, bins) as any;
+    expect(opt.xAxis.minInterval).toBe(1);
+    expect(opt.yAxis.minInterval).toBeUndefined();
+  });
+});

@@ -102,3 +102,28 @@ describe('buildScatterOption', () => {
     expect(superscript(-12)).toBe('⁻¹²');
   });
 });
+
+describe('integer axes', () => {
+  it('ticks only on whole numbers', () => {
+    const opt = buildScatterOption({
+      series: [series],
+      xAxis: { ...xAxis, integer: true },
+      yAxis: { ...yAxis, mapping: 'linear', integer: true },
+      selected: new Set(),
+      drillDown: null,
+    }) as any;
+    expect(opt.xAxis.minInterval).toBe(1);
+    expect(opt.yAxis.minInterval).toBe(1);
+    expect(
+      (
+        buildScatterOption({
+          series: [series],
+          xAxis,
+          yAxis,
+          selected: new Set(),
+          drillDown: null,
+        }) as any
+      ).xAxis.minInterval,
+    ).toBeUndefined();
+  });
+});

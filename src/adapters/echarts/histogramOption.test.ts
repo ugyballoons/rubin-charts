@@ -159,3 +159,29 @@ describe('histogram option', () => {
     expect(some.series[0].renderItem({}, api(1)).style.opacity).toBe(1);
   });
 });
+
+describe('histogram option: integer axis', () => {
+  const intAxis: AxisSpec = { ...logAxis, mapping: 'linear', integer: true };
+  it('bins whole values with half-integer edges and integer-only ticks', () => {
+    const input = {
+      series: [{ id: 'i', name: 'i', values: new Float64Array([1, 2, 2, 3, 5]), color: '#000' }],
+      mainAxis: intAxis,
+      nBins: 20,
+      selected: new Map(),
+    };
+    const bins = computeHistogramBins(input);
+    expect(bins.edges).toEqual([0.5, 1.5, 2.5, 3.5, 4.5, 5.5]);
+    expect(Array.from(bins.perSeries.get('i')!.counts)).toEqual([1, 2, 1, 0, 1]);
+    const opt = buildHistogramOption(input, bins) as any;
+    expect(opt.xAxis.minInterval).toBe(1);
+  });
+  it('keeps pixel-space bins on a log axis even when integer', () => {
+    const bins = computeHistogramBins({
+      series,
+      mainAxis: { ...logAxis, integer: true },
+      nBins: 3,
+      selected: new Map(),
+    });
+    expect(bins.edges).toEqual([1, 10, 100, 1000]);
+  });
+});

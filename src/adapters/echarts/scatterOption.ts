@@ -36,7 +36,12 @@ function axisOption(axis: AxisSpec, values?: ArrayLike<number>) {
     };
   }
   if (axis.mapping === 'linear')
-    return { ...base, type: 'value', axisLabel: tickLabelStyle('number') };
+    return {
+      ...base,
+      type: 'value',
+      axisLabel: tickLabelStyle('number'),
+      ...(axis.integer && { minInterval: 1 }),
+    };
   const logBase = axis.mapping === 'log10' ? 10 : Math.E;
   return {
     ...base,

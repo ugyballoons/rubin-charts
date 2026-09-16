@@ -1,6 +1,12 @@
 import type { EChartsCoreOption } from 'echarts/core';
 import type { AxisSpec } from '../../adapter';
-import { binValues, pixelSpaceBinEdges, type BinCounts, type Bounds } from '../../core/binning';
+import {
+  binValues,
+  integerBinEdges,
+  pixelSpaceBinEdges,
+  type BinCounts,
+  type Bounds,
+} from '../../core/binning';
 import { mappingFor } from '../../core/mapping';
 import { msToMjd } from './scatterOption';
 import { GRID_LEFT, tickLabelStyle, verticalNameGap } from './axisLabels';
@@ -59,7 +65,10 @@ export function computeHistogramBins(input: HistogramOptionInput): HistogramBins
     if (min === max) [min, max] = [min - 0.5, max + 0.5];
     bounds = { min, max };
   }
-  const edges = pixelSpaceBinEdges(input.nBins, bounds, mapping);
+  const edges =
+    input.mainAxis.integer && input.mainAxis.mapping === 'linear'
+      ? integerBinEdges(input.nBins, bounds)
+      : pixelSpaceBinEdges(input.nBins, bounds, mapping);
   const perSeries = new Map(input.series.map((s) => [s.id, binValues(s.values, edges)]));
   return { edges, perSeries };
 }
@@ -176,6 +185,9 @@ export function buildHistogramOption(
       input.mainAxis.mapping !== 'linear' && {
         logBase: input.mainAxis.mapping === 'log10' ? 10 : Math.E,
       }),
+    ...(kind === 'number' &&
+      input.mainAxis.mapping === 'linear' &&
+      input.mainAxis.integer && { minInterval: 1 }),
     name: input.mainAxis.label,
     nameLocation: 'middle',
     nameGap: 30,

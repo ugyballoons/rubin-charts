@@ -31,6 +31,12 @@ export interface AxisSpec {
   readonly mapping: MappingKind;
   readonly inverted: boolean;
   readonly kind: 'number' | 'category' | 'datetime';
+  /**
+   * For number axes: the values are whole numbers (ids, counts, detector
+   * numbers). Ticks then land only on integers and histogram and box bins
+   * are integer-wide with edges at half-integers, so no value sits on an edge.
+   */
+  readonly integer?: boolean;
   /** For datetime axes: label ticks as Modified Julian Date instead of calendar dates. */
   readonly mjdLabels?: boolean;
   /** For category axes: the labels; series values are indices into this list. */

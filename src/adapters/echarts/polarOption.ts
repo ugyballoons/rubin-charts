@@ -113,6 +113,7 @@ export function buildPolarOption(input: PolarOptionInput): EChartsCoreOption {
     inverse: radial.inverted,
     scale: true,
     axisLabel: tickLabelStyle(radial.mapping === 'linear' ? 'number' : 'log'),
+    ...(radial.mapping === 'linear' && radial.integer && { minInterval: 1 }),
     ...(radial.fixedBounds && { min: radial.fixedBounds.min, max: radial.fixedBounds.max }),
   };
   const angleAxis: Record<string, unknown> = {

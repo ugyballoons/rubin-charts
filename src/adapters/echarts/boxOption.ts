@@ -1,6 +1,6 @@
 import type { EChartsCoreOption } from 'echarts/core';
 import type { AxisSpec } from '../../adapter';
-import { binValues, pixelSpaceBinEdges, type Bounds } from '../../core/binning';
+import { binValues, integerBinEdges, pixelSpaceBinEdges, type Bounds } from '../../core/binning';
 import { mappingFor } from '../../core/mapping';
 import { GRID_LEFT, tickLabelStyle, verticalNameGap } from './axisLabels';
 
@@ -83,7 +83,10 @@ export function computeBoxBins(input: BoxOptionInput): BoxBins {
     if (min === max) [min, max] = [min - 0.5, max + 0.5];
     bounds = { min, max };
   }
-  const edges = pixelSpaceBinEdges(input.nBins, bounds, mapping);
+  const edges =
+    input.mainAxis.integer && input.mainAxis.mapping === 'linear'
+      ? integerBinEdges(input.nBins, bounds)
+      : pixelSpaceBinEdges(input.nBins, bounds, mapping);
   const perSeries = new Map<string, (BoxStats | null)[]>();
   const members = new Map<string, readonly (readonly number[])[]>();
   for (const s of input.series) {
@@ -198,6 +201,7 @@ export function buildBoxOption(
     inverse: a.inverted,
     scale: true,
     axisLabel: tickLabelStyle(a.mapping === 'linear' ? 'number' : 'log'),
+    ...(a.mapping === 'linear' && a.integer && { minInterval: 1 }),
     ...extra,
   });
   const main = axis(input.mainAxis, {});
