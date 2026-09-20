@@ -4,7 +4,7 @@ import type { YAxisIndex } from '../../core/yAxes';
 import { binValues, integerBinEdges, pixelSpaceBinEdges, type Bounds } from '../../core/binning';
 import { mappingFor } from '../../core/mapping';
 import {
-  GRID_LEFT,
+  GRID_MARGIN,
   numberAxisLabel,
   sharedColor,
   tickFormatter,
@@ -244,10 +244,9 @@ export function buildBoxOption(
     xAxis: vertical ? main : cross,
     yAxis: vertical ? cross : main,
     grid: {
-      containLabel: true,
-      left: GRID_LEFT,
+      left: GRID_MARGIN,
       // The far margin makes the same room for a secondary axis title as the near one.
-      right: twin && vertical ? GRID_LEFT : 16,
+      right: twin && vertical ? GRID_MARGIN : 16,
       top: twin && !vertical ? 36 : 16,
       bottom: 36,
     },

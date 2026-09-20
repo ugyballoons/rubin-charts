@@ -9,7 +9,7 @@ import {
 } from '../../core/binning';
 import { mappingFor } from '../../core/mapping';
 import { msToMjd } from './scatterOption';
-import { GRID_LEFT, plainDigitsLabel, tickLabelStyle, verticalNameGap } from './axisLabels';
+import { GRID_MARGIN, plainDigitsLabel, tickLabelStyle, verticalNameGap } from './axisLabels';
 
 export interface HistogramSeriesInput {
   readonly id: string;
@@ -220,7 +220,7 @@ export function buildHistogramOption(
     useUTC: true,
     xAxis: vertical ? mainOption : countOption,
     yAxis: vertical ? countOption : mainOption,
-    grid: { containLabel: true, left: GRID_LEFT, right: 16, top: 16, bottom: 36 },
+    grid: { left: GRID_MARGIN, right: 16, top: 16, bottom: 36 },
     series,
   };
 }

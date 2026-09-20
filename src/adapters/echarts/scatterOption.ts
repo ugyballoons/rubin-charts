@@ -2,7 +2,7 @@ import type { EChartsCoreOption } from 'echarts/core';
 import type { AxisSpec, SeriesSpec } from '../../adapter';
 import type { DataIdKey } from '../../core/dataId';
 import {
-  GRID_LEFT,
+  GRID_MARGIN,
   numberAxisLabel,
   sharedColor,
   tickFormatter,
@@ -157,9 +157,8 @@ export function buildScatterOption(input: ScatterOptionInput): EChartsCoreOption
     yAxis: yAxes,
     // The right margin makes the same room for a secondary axis title as the left does.
     grid: {
-      containLabel: true,
-      left: GRID_LEFT,
-      right: twin ? GRID_LEFT : 16,
+      left: GRID_MARGIN,
+      right: twin ? GRID_MARGIN : 16,
       top: 16,
       bottom: 36,
     },

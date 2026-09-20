@@ -42,12 +42,12 @@ export function formatTick(v: number): string {
 }
 
 /**
- * Left grid margin that keeps a vertical axis title inside the chart: the
- * title sits `nameGap` left of the axis line while `containLabel` reserves
- * only the tick labels, so the margin must cover the title's own height plus
- * the amount the gap may exceed the drawn labels.
+ * Grid margin on the sides that carry a vertical axis. ECharts 6 keeps tick
+ * labels and axis titles inside the chart on its own (`outerBoundsContain`
+ * defaults to 'all'; the old `containLabel` is deprecated), so this is only
+ * breathing room between the title and the edge.
  */
-export const GRID_LEFT = 30;
+export const GRID_MARGIN = 16;
 
 /**
  * Gap between a vertical axis and its title, wide enough for the widest tick
